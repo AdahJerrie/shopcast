@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: shopcast
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: streamlit run app.py --server.port $PORT --server.address 0.0.0.0 --server.headless true --browser.gatherUsageStats false
+    healthCheckPath: /_stcore/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: TABPFN_TOKEN
+        sync: false
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: GEMMA_MODEL
+        value: gemma-3-27b-it
+      - key: LLM_PROVIDER
+        value: google
+      - key: FORECAST_BACKEND
+        value: tabpfn
+      - key: CURRENCY_SYMBOL
+        value: ₦
