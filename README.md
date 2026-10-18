@@ -27,7 +27,7 @@ copy .env.example .env   # then fill in TABPFN_TOKEN and GOOGLE_API_KEY
 ```
 
 - `TABPFN_TOKEN`: sign up at [platform.priorlabs.ai](https://platform.priorlabs.ai) and accept the non-commercial license.
-- `GOOGLE_API_KEY`: [Google AI Studio](https://aistudio.google.com/apikey). `GEMMA_MODEL` defaults to `gemma-3-27b-it`.
+- `GOOGLE_API_KEY`: [Google AI Studio](https://aistudio.google.com/apikey). `GEMMA_MODEL` defaults to `gemma-4-26b-a4b-it`; run `python scripts/list_gemma_models.py` to see which Gemma models your key can use.
 
 ### Fully offline mode
 
