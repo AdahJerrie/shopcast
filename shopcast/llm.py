@@ -14,7 +14,7 @@ def provider() -> str:
 def model_name() -> str:
     if provider() == "ollama":
         return os.getenv("OLLAMA_MODEL", "gemma3:1b")
-    return os.getenv("GEMMA_MODEL", "gemma-3-27b-it")
+    return os.getenv("GEMMA_MODEL", "gemma-4-26b-a4b-it")
 
 
 def generate(prompt: str, temperature: float = 0.2) -> str:
