@@ -60,7 +60,7 @@ def overview(ctx: ShopContext) -> dict:
         "backtest": {
             "model_mae": _money(ctx, ctx.backtest["model_mae"]),
             "naive_mae": _money(ctx, ctx.backtest["naive_mae"]),
-            "improvement_vs_naive_pct": round(ctx.backtest["improvement_pct"], 1),
+            "error_reduction_vs_naive": f"{ctx.backtest['improvement_pct']:.1f}%",
         },
     }
 
