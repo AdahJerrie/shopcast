@@ -1,4 +1,5 @@
-﻿import io
+﻿import hashlib
+import io
 import os
 from pathlib import Path
 
@@ -79,24 +80,49 @@ def backtest_chart(frame: pd.DataFrame) -> alt.Chart:
 with st.sidebar:
     st.title("📈 ShopCast")
     st.caption("Sales forecasts for small shops, powered by open models: TabPFN for the numbers, Gemma for the words.")
-    shop_name = st.text_input("Shop name", "Mama Tolu's Bakery")
+    shop_name = st.text_input("Shop name", placeholder="e.g. Mama Tolu's Bakery") or "Your shop"
     upload = st.file_uploader("Daily sales CSV", type="csv", help="Columns: date, sales, and optionally promo (0/1).")
-    use_sample = st.toggle("Use sample bakery data", value=upload is None)
+    use_sample = st.toggle("Use sample bakery data instead", value=False)
     horizon = st.slider("Forecast horizon (days)", 7, 56, 28, step=7)
+
+    if use_sample:
+        csv_bytes = SAMPLE.read_bytes()
+    elif upload is not None:
+        csv_bytes = upload.getvalue()
+    else:
+        csv_bytes = None
+
+    run_key = (hashlib.sha256(csv_bytes).hexdigest(), horizon) if csv_bytes else None
+    if st.button("Start forecast", type="primary", disabled=csv_bytes is None, width="stretch"):
+        st.session_state["run_key"] = run_key
+
     st.divider()
     st.caption(f"Forecast model: **{'TabPFN (Prior Labs API)' if backend() == 'tabpfn' else 'offline sklearn stand-in'}**")
     st.caption(f"Language model: **{llm.model_name()}** via {llm.provider()}")
 
-if upload is not None and not use_sample:
-    csv_bytes = upload.getvalue()
-elif use_sample:
-    csv_bytes = SAMPLE.read_bytes()
-else:
-    st.info("Upload a CSV with `date` and `sales` columns, or switch on the sample data.")
+if csv_bytes is None:
+    st.header("Welcome to ShopCast")
+    st.info("Upload a daily sales CSV with `date` and `sales` columns (and optionally `promo`), or switch on the sample data, then click **Start forecast**.")
+    st.stop()
+
+if st.session_state.get("run_key") != run_key:
+    st.header(shop_name)
+    try:
+        preview = load_sales(io.BytesIO(csv_bytes))
+    except Exception as exc:
+        st.error(f"This file can't be used yet: {exc}")
+        st.stop()
+    st.success(
+        f"File looks good: {len(preview)} days of sales from {preview['date'].min():%d %b %Y} "
+        f"to {preview['date'].max():%d %b %Y}"
+        + (", with promo days." if preview["promo"].any() else ". No promo column, so the what-if tool is off.")
+    )
+    st.dataframe(preview.tail(10).assign(date=preview["date"].dt.strftime("%a %d %b %Y")), hide_index=True, width="stretch")
+    st.info(f"Click **Start forecast** in the sidebar. The first run on a file takes a few minutes while {MODEL} studies the history.")
     st.stop()
 
 try:
-    with st.spinner(f"Asking {MODEL} about your sales history..."):
+    with st.spinner(f"Asking {MODEL} about your sales history. This can take a few minutes on the first run..."):
         data = analyse(csv_bytes, horizon, backend())
 except Exception as exc:  # surface config and data problems to the owner
     st.error(f"Could not analyse this file: {exc}")
